@@ -1,0 +1,8 @@
+<!ENTITY zotero.zoterochatbot.pref.title "ChatGPT Settings">
+<!ENTITY zotero.zoterochatbot.itemmenu.test.label "addon template">
+<!ENTITY zotero.zoterochatbot.pref.enable.label "Enable">
+<!ENTITY zotero.zoterochatbot.pref.apikey.label "ApiKey">
+<!ENTITY zotero.zoterochatbot.pref.base_url.label "Base_Url">
+
+<!ENTITY zotero.zoterochatbot.help.version.label "Zotero ChatGPT VERSION 0.1.6">
+<!ENTITY zotero.zoterochatbot.help.releasetime.label "Build 2023-04-11 13:54:48">
