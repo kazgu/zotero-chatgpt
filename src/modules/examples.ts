@@ -180,7 +180,65 @@ export class KeyExampleFactory {
     );
   }
 }
+async function  chatresult_duli(prompt: string,refID: string) {
+      
+    
+      let iid=`${config.addonRef}-${refID}-reader-tab-chatinput`;
+    ztoolkit.getGlobal("alert")(iid);
+    let instr=(<HTMLInputElement>document.getElementById(iid)).value;
+const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true); 
+  const apiUrl =Zotero.Prefs.get(`${config.prefsPrefix}.base_url`, true);
+   // ztoolkit.getGlobal("alert")(apikey);
+   //   ztoolkit.getGlobal("alert")(apiUrl);
+    let data=[
+        {
+            role: "system",
+            content:`${prompt}`,
+          },
+          {
+            role: "user",
+            content:`${instr}`,
+          },
+        ]
+  //  ztoolkit.getGlobal("alert")(data);
+  const xhr =await  Zotero.HTTP.request(
+    "POST",
+    apiUrl, 
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apikey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+        {
+            role: "system",
+            content:`${prompt}`,
+          },
+          {
+            role: "user",
+            content:`${instr}`,
+          },
+        ],
+      }),
+      responseType: "json",
+    }
+  );
+  if (xhr?.status !== 200) {
+    throw `Request error: ${xhr?.status}`;
+  }
+      try {
+    let result=xhr.response.choices[0].message.content;
+//ztoolkit.getGlobal("alert")(result);
+      
+    (<HTMLInputElement>document.getElementById(iid)).value=result
+} catch (e: any) {
+ztoolkit.getGlobal("alert")(e.message);
+}
+  }
 
+     
 export class UIExampleFactory {
   @example
   static registerStyleSheet() {
@@ -199,7 +257,7 @@ export class UIExampleFactory {
   @example
   private static async chatresult(prompt: string) {
       
-    //ztoolkit.getGlobal("alert")(prompt);
+    ztoolkit.getGlobal("alert")(prompt);
       
     let instr=(<HTMLInputElement>document.getElementById('zotero-readerpane-__addonRef__-inout')).value;
 const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true); 
@@ -233,10 +291,15 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
   if (xhr?.status !== 200) {
     throw `Request error: ${xhr?.status}`;
   }
+      try {
     let result=xhr.response.choices[0].message.content;
 //ztoolkit.getGlobal("alert")(result);
       
     (<HTMLInputElement>document.getElementById('zotero-readerpane-__addonRef__-inout')).value=result
+} catch (e: any) {
+ztoolkit.getGlobal("alert")(e.message);
+}
+
       
   }
   @example
@@ -449,6 +512,10 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
           return;
         }
         ztoolkit.log(reader);
+        
+        //const makeId = (type: string) => `${config.addonRef}-${reader._instanceID}-panel-${type}`;
+          let rid=reader._instanceID;
+          
         const elem = ztoolkit.UI.createElement(win.document, "vbox", {
           id: `${config.addonRef}-${reader._instanceID}-extra-reader-tab-div`,
           // This is important! Don't create content for multiple times
@@ -485,7 +552,7 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
               children: [ 
                 { 
                   tag: "textarea",
-                  id: "zotero-readerpane-__addonRef__-inout",
+                  id: `${config.addonRef}-${reader._instanceID}-reader-tab-chatinput`,
                   styles: {
                     resize: "none",
                       maxWidth: "480px",
@@ -505,7 +572,22 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
             minHeight: 30,
           },
           children: [
-         {
+                {
+              tag: "button",
+              namespace: "html",
+              properties: {
+                innerText: "QA",
+              },
+              listeners: [
+                {
+                  type: "click",
+                  listener: () => {
+                     chatresult_duli("",rid);
+                  },
+                },
+              ],
+            },
+             {
               tag: "button",
               namespace: "html",
               properties: {
@@ -516,7 +598,7 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
                   type: "click",
                   listener: () => {
                     
-                      this.chatresult("you are an encyclopedia, please explain this for me.");
+                     chatresult_duli("Please explain the following concept.",rid);
                     
                   },
                 },
@@ -532,7 +614,7 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
                 {
                   type: "click",
                   listener: () => {
-                    this.chatresult("You are a researcher helper bot. please help me summarize the following text in academic level.");
+                    chatresult_duli("You are a researcher helper bot. please help me summarize the following text.",rid);
                   },
                 },
               ],
@@ -547,11 +629,12 @@ const apikey = Zotero.Prefs.get(`${config.prefsPrefix}.apikey`, true);
                 {
                   type: "click",
                   listener: () => {
-                     this.chatresult("please help me translate the following text, if the text is english then translate into chinese, else translate into english.");
+                     chatresult_duli("please help me translate the following text, if the text is english then translate into chinese, else translate into english.",rid);
                   },
                 },
               ],
             },
+            
           ]
             },
             
