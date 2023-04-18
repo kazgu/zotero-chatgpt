@@ -34,6 +34,9 @@ Before using the ChatGPT plugin, API Key Setup is a necessary step:
 ## Usage
 
 Once installed and API key is set, you can start benefiting from the ChatGPT plugin instantly. Simply highlight the text you want to explore, right-click and select "ChatGPT" from the menu. A drop-down menu will appear with options for concept explanations, content summaries, and bidirectional translation.
+<img width="822" alt="Screenshot 2023-04-18 at 22 13 22" src="https://user-images.githubusercontent.com/7955157/232805933-2deefcab-ff00-40f0-b40d-e8be264d073a.png">
+
+<img width="1439" alt="Screenshot 2023-04-18 at 22 14 52" src="https://user-images.githubusercontent.com/7955157/232805638-2010f21a-baf9-4957-a733-7ab0ce4b0236.png">
 
 ## Feedback
 
