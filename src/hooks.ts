@@ -44,7 +44,7 @@ async function onStartup() {
     text: `[30%] ${getString("startup.begin")}`,
   });
 
-  UIExampleFactory.registerStyleSheet();
+ //UIExampleFactory.registerStyleSheet();
 
 //   UIExampleFactory.registerRightClickMenuItem();
 
@@ -52,23 +52,23 @@ async function onStartup() {
 
 //   UIExampleFactory.registerWindowMenuWithSeparator();
 
-  await UIExampleFactory.registerExtraColumn();
+//  await UIExampleFactory.registerExtraColumn();
 
-  await UIExampleFactory.registerExtraColumnWithCustomCell();
+//  await UIExampleFactory.registerExtraColumnWithCustomCell();
 
-  await UIExampleFactory.registerCustomCellRenderer();
+//  await UIExampleFactory.registerCustomCellRenderer();
 
-  await UIExampleFactory.registerCustomItemBoxRow();
+//  await UIExampleFactory.registerCustomItemBoxRow();
 
 //   UIExampleFactory.registerLibraryTabPanel();
 
   await UIExampleFactory.registerReaderTabPanel();
 
-  PromptExampleFactory.registerNormalCommandExample();
+//  PromptExampleFactory.registerNormalCommandExample();
 
-  PromptExampleFactory.registerAnonymousCommandExample();
+//  PromptExampleFactory.registerAnonymousCommandExample();
 
-  PromptExampleFactory.registerConditionalCommandExample();
+//  PromptExampleFactory.registerConditionalCommandExample();
 
   await Zotero.Promise.delay(1000);
 
