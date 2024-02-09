@@ -11,7 +11,7 @@
   "applications": {
     "zotero": {
       "id": "zoterochatbot@foxmail.com",
-      "update_url": "https://www.zotero.org/download/plugins/make-it-red/updates.json",
+      "update_url": "https://github.com/kazgu/zotero-chat/bootstrap/update.json",
       "strict_min_version": "6.999",
       "strict_max_version": "7.0.*"
     }
