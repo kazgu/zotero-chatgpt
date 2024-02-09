@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Make It Red",
+  "version": "1.1",
+  "description": "Makes everything red",
+  "author": "Zotero",
+  "icons": {
+    "48": "icon.png",
+    "96": "icon@2x.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "make-it-red@zotero.org",
+      "update_url": "https://www.zotero.org/download/plugins/make-it-red/updates.json",
+      "strict_min_version": "6.999",
+      "strict_max_version": "7.0.*"
+    }
+  }
+}
