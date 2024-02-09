@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "Make It Red",
+  "name": "Zotero ChatGPT",
   "version": "1.1",
-  "description": "Makes everything red",
-  "author": "Zotero",
+  "description": "Zotero ChatGPT",
+  "author": "kazgu",
   "icons": {
     "48": "icon.png",
     "96": "icon@2x.png"
