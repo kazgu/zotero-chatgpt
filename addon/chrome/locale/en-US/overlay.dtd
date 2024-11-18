@@ -1,8 +1,0 @@
-<!ENTITY zotero.__addonRef__.pref.title "ChatGPT Settings">
-<!ENTITY zotero.__addonRef__.itemmenu.test.label "addon template">
-<!ENTITY zotero.__addonRef__.pref.enable.label "Enable">
-<!ENTITY zotero.__addonRef__.pref.apikey.label "ApiKey">
-<!ENTITY zotero.__addonRef__.pref.base_url.label "Base_Url">
-
-<!ENTITY zotero.__addonRef__.help.version.label "__addonName__ VERSION __buildVersion__">
-<!ENTITY zotero.__addonRef__.help.releasetime.label "Build __buildTime__">

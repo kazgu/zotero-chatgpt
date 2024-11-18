@@ -1,0 +1,10 @@
+item-section-example1-head-text =
+    .label = ChatGPT
+item-section-example1-sidenav-tooltip =
+    .tooltiptext = ChatGPT
+item-section-example2-head-text =
+    .label = ChatGPT 
+item-section-example2-sidenav-tooltip =
+    .tooltiptext = ChatGPT
+item-section-example2-button-tooltip =
+    .tooltiptext = ChatGPT

@@ -1,7 +1,0 @@
-<!ENTITY zotero.zoterochatbot.pref.title "插件模板设置示例">
-<!ENTITY zotero.zoterochatbot.itemmenu.test.label "插件模板">
-<!ENTITY zotero.zoterochatbot.pref.enable.label "开启">
-<!ENTITY zotero.zoterochatbot.pref.input.label "输入">
-
-<!ENTITY zotero.zoterochatbot.help.version.label "Zotero ChatGPT 版本 0.1.6">
-<!ENTITY zotero.zoterochatbot.help.releasetime.label "Build 2023-04-11 13:54:48">
