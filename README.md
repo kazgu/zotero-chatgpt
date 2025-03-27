@@ -3,6 +3,7 @@
 ## Overview
 
 The Zotero ChatGPT Plugin integrates the powerful capabilities of the ChatGPT AI model directly into Zotero, enabling users to ask questions and receive intelligent responses without leaving the Zotero environment. This plugin enhances your research workflow by allowing you to quickly gather insights, generate content, and clarify concepts related to your references and notes.
+<img width="1585" alt="overview" src="https://github.com/user-attachments/assets/e2748763-fe2c-4535-8042-995d9802b5d4" />
 
 ## Features
 
