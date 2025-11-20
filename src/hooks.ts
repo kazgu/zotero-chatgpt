@@ -3,7 +3,7 @@ import {
   HelperExampleFactory,
   KeyExampleFactory,
   UIExampleFactory,
-} from "./modules/examples";
+} from "./modules/main";
 import { config } from "../package.json";
 import { getString, initLocale } from "./utils/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";

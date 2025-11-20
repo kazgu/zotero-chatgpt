@@ -1,3 +1,360 @@
 .makeItRed {
   background-color: tomato;
 }
+
+/* ChatGPT Chat Interface Styles */
+
+/* Main container */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f7f7f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Chat history area */
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar styling */
+.chat-history::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Message wrapper */
+.message-wrapper {
+  display: flex;
+  width: 100%;
+  animation: slideIn 0.2s ease-out;
+}
+
+.message-wrapper.user {
+  justify-content: flex-end;
+}
+
+.message-wrapper.assistant {
+  justify-content: flex-start;
+}
+
+.message-wrapper.system {
+  justify-content: center;
+}
+
+/* Message bubbles */
+.message-bubble {
+  border-radius: 18px;
+  padding: 10px 16px;
+  max-width: 70%;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.message-bubble.user-message {
+  background: #0084ff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-bubble.assistant-message {
+  background: #e4e6eb;
+  color: #050505;
+  border-bottom-left-radius: 4px;
+}
+
+.message-bubble.system-message {
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 80%;
+  text-align: center;
+}
+
+.message-bubble.error-message {
+  background: #ff4444;
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 80%;
+}
+
+/* Message content */
+.message-content {
+  font-size: 14px;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: inline-flex;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8a8a8a;
+  animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* PDF control section */
+.pdf-control {
+  padding: 8px 16px;
+  background: white;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-control label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pdf-control input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.pdf-control input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pdf-status {
+  font-size: 12px;
+  color: #666;
+  margin-left: 4px;
+}
+
+.pdf-status.attached {
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Input section */
+.input-section {
+  border-top: 1px solid #e5e5e5;
+  background: white;
+  padding: 12px;
+}
+
+.input-area {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.input-box {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+  line-height: 1.4;
+}
+
+.input-box:focus {
+  outline: none;
+  border-color: #0084ff;
+}
+
+.input-box::placeholder {
+  color: #999;
+}
+
+.input-box::-webkit-scrollbar {
+  width: 4px;
+}
+
+.input-box::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+/* Send button */
+.send-button {
+  background: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background 0.2s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #0073e6;
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.send-button svg,
+.send-button span {
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typing {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Empty state */
+.chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  gap: 8px;
+}
+
+.chat-empty-state-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .message-bubble {
+    max-width: 85%;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .chat-history {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .input-section {
+    padding: 8px;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .chat-container {
+    background: #1e1e1e;
+  }
+
+  .message-bubble.assistant-message {
+    background: #2d2d2d;
+    color: #e4e4e4;
+  }
+
+  .pdf-control,
+  .input-section {
+    background: #2d2d2d;
+    border-color: #3d3d3d;
+  }
+
+  .pdf-control label {
+    color: #ccc;
+  }
+
+  .input-box {
+    background: #1e1e1e;
+    border-color: #3d3d3d;
+    color: #e4e4e4;
+  }
+
+  .input-box::placeholder {
+    color: #666;
+  }
+}
