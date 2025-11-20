@@ -5,6 +5,7 @@
 
 A Zotero plugin that integrates ChatGPT functionality directly into your reference management workflow.
 
+![show](default.jpg "show")
 
 ## Features
 
