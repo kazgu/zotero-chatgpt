@@ -37,7 +37,7 @@
     "@types/mute-stream": "^0.0.4",
     "@types/normalize-package-data": "^2.4.4",
     "@types/prop-types": "^15.7.13",
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.2.6",
     "@types/semver": "^7.5.8",
     "@types/wrap-ansi": "^8.1.0",
     "@types/yauzl": "^2.10.3",
