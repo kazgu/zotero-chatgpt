@@ -1,6 +1,6 @@
 {
   "name": "zotero-chatgpt",
-  "version": "1.6",
+  "version": "1.7",
   "description": "ChatGPT in Zotero",
   "config": {
     "addonName": "Zotero ChatGPT",
