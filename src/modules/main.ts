@@ -1,6 +1,7 @@
 import { config } from "../../package.json";
 import { getLocaleID, getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
+import { showReviewDialog } from "./reviewDialog";
 
 // Chat session types
 interface ChatMessage {
@@ -29,6 +30,14 @@ function getChatSession(item: Zotero.Item): ChatSession {
   }
   return chatSessions.get(item)!;
 }
+
+function isSafeToRender(content: string): boolean {
+  // 只检查代码块
+  const codeBlockMarkers = (content.match(/```/g) || []).length;
+  return codeBlockMarkers % 2 === 0;
+}
+
+
 
 function example(
   target: any,
@@ -166,32 +175,63 @@ export class UIExampleFactory {
   }
 
   @example
-  static registerRightClickMenuItem() {
+  static registerRightClickMenuItem(win: Window) {
+    const doc = win.document;
+    const itemMenu = doc.getElementById("zotero-itemmenu");
+    if (
+      !itemMenu ||
+      doc.getElementById("zotero-itemmenu-addontemplate-test")
+    ) {
+      return;
+    }
     const menuIcon = `chrome://${config.addonRef}/content/icons/favicon@0.5x.png`;
 
     // item menuitem with icon
-    ztoolkit.Menu.register("item", {
-      tag: "menuitem",
-      id: "zotero-itemmenu-addontemplate-test",
-      label: getString("menuitem-label"),
-      commandListener: (ev) => addon.hooks.onDialogEvents("dialogExample"),
-      icon: menuIcon,
-    });
+    itemMenu.appendChild(
+      ztoolkit.UI.createElement(doc, "menuitem", {
+        id: "zotero-itemmenu-addontemplate-test",
+        attributes: {
+          label: getString("menuitem-label"),
+          class: "menuitem-iconic",
+        },
+        styles: { listStyleImage: `url(${menuIcon})` },
+        listeners: [
+          {
+            type: "command",
+            listener: () => addon.hooks.onDialogEvents("dialogExample"),
+          },
+        ],
+      }),
+    );
   }
 
-
-
   @example
-  static registerWindowMenuWithSeparator() {
-    ztoolkit.Menu.register("menuFile", {
-      tag: "menuseparator",
-    });
+  static registerWindowMenuWithSeparator(win: Window) {
+    const doc = win.document;
+    const menuFile = doc.getElementById("menuFile");
+    if (!menuFile || doc.getElementById("zotero-filemenu-addontemplate-test")) {
+      return;
+    }
+    menuFile.appendChild(
+      ztoolkit.UI.createElement(doc, "menuseparator", {
+        id: "zotero-filemenu-addontemplate-sep",
+      }),
+    );
     // menu->File menuitem
-    ztoolkit.Menu.register("menuFile", {
-      tag: "menuitem",
-      label: getString("menuitem-filemenulabel"),
-      oncommand: "alert('Hello World! File Menuitem.')",
-    });
+    menuFile.appendChild(
+      ztoolkit.UI.createElement(doc, "menuitem", {
+        id: "zotero-filemenu-addontemplate-test",
+        attributes: { label: getString("menuitem-filemenulabel") },
+        listeners: [
+          {
+            type: "command",
+            listener: () => {
+              ztoolkit.getGlobal("alert")("Hello World! File Menuitem.");
+            },
+          },
+        ],
+      }),
+    );
   }
 
   @example
@@ -272,18 +312,12 @@ export class UIExampleFactory {
       },
       bodyXHTML: `
         <html:div style="display:block;max-height:1000px;height:100%;overflow:hidden;background:#f7f7f8;">
-          <html:div id="chat-history" style="height:calc(100% - 120px);max-height:800px;overflow-y:auto;overflow-x:hidden;padding:12px;background:#f7f7f8;">
+          <html:div id="chat-history" style="height:calc(100% - 60px);max-height:860px;overflow-y:auto;overflow-x:hidden;padding:12px;background:#f7f7f8;">
             <html:div id="empty-state" style="text-align:center;padding:40px 20px;color:#999;font-size:14px;">
               <html:div style="font-size:36px;margin-bottom:8px;">💬</html:div>
               <html:div data-l10n-id="${getLocaleID("chat-empty-state")}">Start a conversation with ChatGPT</html:div>
+              <html:div id="pdf-status" style="margin-top:12px;font-size:12px;color:#666;"></html:div>
             </html:div>
-          </html:div>
-          <html:div style="padding:8px 12px;background:#fff;border-top:1px solid #ddd;">
-            <html:label style="display:block;margin-bottom:8px;font-size:13px;color:#444;">
-              <html:input type="checkbox" id="attach-pdf" style="margin-right:6px;" />
-              <html:span data-l10n-id="${getLocaleID("chat-attach-pdf-label")}">附加 PDF 内容</html:span>
-              <html:span id="pdf-status" style="margin-left:8px;font-size:12px;color:#666;"></html:span>
-            </html:label>
           </html:div>
           <html:div style="padding:8px 12px;background:#fff;border-top:1px solid #ddd;">
             <html:div style="position:relative;">
@@ -339,7 +373,6 @@ export class UIExampleFactory {
         const chatHistory = body.querySelector("#chat-history") as HTMLElement;
         const messageInput = body.querySelector("#message-input") as HTMLTextAreaElement;
         const sendButton = body.querySelector("#send-button") as HTMLButtonElement;
-        const attachPdfCheckbox = body.querySelector("#attach-pdf") as HTMLInputElement;
         const pdfStatus = body.querySelector("#pdf-status") as HTMLElement;
 
         // Get API credentials
@@ -350,13 +383,26 @@ export class UIExampleFactory {
         // Get or create chat session for this item
         const session = getChatSession(item);
 
-        // Check if PDF is available
-        const hasPdf = await checkPdfAvailability(item);
-        if (!hasPdf) {
-          attachPdfCheckbox.disabled = true;
-          pdfStatus.textContent = getString("chat-attach-pdf-no-pdf");
-          pdfStatus.className = "pdf-status";
-        } else if (session.pdfAttached) {
+        // Auto-attach PDF on initialization if available and not already attached
+        if (!session.pdfAttached) {
+          const hasPdf = await checkPdfAvailability(item);
+          if (hasPdf) {
+            pdfStatus.textContent = getString("chat-attach-pdf-loading");
+            const pdfContent = await getPdfContent(item);
+            if (pdfContent) {
+              session.pdfContent = pdfContent;
+              session.pdfAttached = true;
+              pdfStatus.textContent = `✓ ${getString("chat-attach-pdf-attached")}`;
+              pdfStatus.className = "pdf-status attached";
+            } else {
+              pdfStatus.textContent = getString("chat-attach-pdf-no-pdf");
+              pdfStatus.className = "pdf-status";
+            }
+          } else {
+            pdfStatus.textContent = getString("chat-attach-pdf-no-pdf");
+            pdfStatus.className = "pdf-status";
+          }
+        } else {
           pdfStatus.textContent = `✓ ${getString("chat-attach-pdf-attached")}`;
           pdfStatus.className = "pdf-status attached";
         }
@@ -367,7 +413,10 @@ export class UIExampleFactory {
             const attachments = await item.getAttachments();
             for (const attachmentID of attachments) {
               const attachment = await Zotero.Items.getAsync(attachmentID);
-              if (attachment.attachmentContentType === 'application/pdf') {
+              if (
+                attachment &&
+                attachment.attachmentContentType === 'application/pdf'
+              ) {
                 return true;
               }
             }
@@ -383,7 +432,10 @@ export class UIExampleFactory {
             const attachments = await item.getAttachments();
             for (const attachmentID of attachments) {
               const attachment = await Zotero.Items.getAsync(attachmentID);
-              if (attachment.attachmentContentType === 'application/pdf') {
+              if (
+                attachment &&
+                attachment.attachmentContentType === 'application/pdf'
+              ) {
                 return await attachment.attachmentText;
               }
             }
@@ -468,7 +520,6 @@ export class UIExampleFactory {
           return { content, copyBtn };
         }
 
-        // Helper: Simple markdown to HTML converter
         function markdownToHtml(markdown: string): string {
           let html = markdown;
 
@@ -509,17 +560,75 @@ export class UIExampleFactory {
           return html;
         }
 
-        // Helper: Escape HTML
+
+
+        // HTML escape function (must be implemented)
         function escapeHtml(text: string): string {
-          const div = body.ownerDocument.createElement('div');
-          div.textContent = text;
-          return div.innerHTML;
+          if (typeof text !== 'string') {
+            return '';
+          }
+
+          const map: Record<string, string> = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          };
+
+          return text.replace(/[&<>"']/g, (char) => map[char] || char);
         }
 
+
+
         // Helper: Update message content with markdown rendering
-        function updateMessageContent(messageObj: { content: HTMLElement, copyBtn: HTMLElement }, content: string) {
-          messageObj.content.innerHTML = markdownToHtml(content);
-          scrollToBottom();
+        function updateMessageContent(messageObj: { content: HTMLElement, copyBtn: HTMLElement }, all_content: string, content: string) {
+          try {
+            const htmlContent = markdownToHtml(all_content + content);
+
+
+            // Use DOMParser to validate XML/HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString('<root>' + htmlContent + '</root>', 'application/xml');
+
+            // Check for parsing errors
+            const parserError = doc.querySelector('parsererror');
+            if (parserError) {
+              throw new Error('XML parsing error: ' + parserError.textContent);
+            }
+
+            // If valid, set innerHTML
+            messageObj.content.innerHTML = htmlContent;
+            scrollToBottom();
+          } catch (error) {
+
+
+
+            const cleanMarkdown = (md: string): string =>
+              md
+                .replace(/```[\s\S]*?```/g, '')
+                .replace(/`[^`]+`/g, '')
+                .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                .replace(/\*\*([^*]+)\*\*/g, '$1')
+                .replace(/\*([^*]+)\*/g, '$1')
+                .replace(/^#{1,6}\s+/gm, '')
+                .replace(/^>\s+/gm, '')
+                .replace(/^\s*[-*+]\s+/gm, '')
+                .replace(/^\s*\d+\.\s+/gm, '')
+                .replace(/\$\$[\s\S]*?\$\$/g, '')
+                .replace(/\$[^$]+\$/g, '')
+                .replace(/\|/g, ' ')
+                .replace(/^---+$/gm, '')
+                .replace(/\n{3,}/g, '\n\n');
+            // Fallback to safe plain text
+            content = cleanMarkdown(content)
+            messageObj.content.innerHTML = all_content + content;
+            // messageObj.content.innerHTML = '<pre style="white-space:pre-wrap;word-wrap:break-word;">' +
+            //   escapeHtml(content) + '</pre>';
+            scrollToBottom();
+          }
+          return all_content + content
         }
 
         // Helper: Show copy button
@@ -568,24 +677,8 @@ export class UIExampleFactory {
             // Render user message
             renderUserMessage(userMessage);
 
-            // Prepare message content
-            let finalContent = userMessage;
-
-            // Handle PDF attachment
-            if (attachPdfCheckbox.checked && !session.pdfAttached) {
-              if (!session.pdfContent) {
-                const pdfContent = await getPdfContent(item);
-                session.pdfContent = pdfContent || undefined;
-              }
-              if (session.pdfContent) {
-                finalContent += "\n\nPDF Content:\n" + session.pdfContent;
-                session.pdfAttached = true;
-                pdfStatus.textContent = `✓ ${getString("chat-attach-pdf-attached")}`;
-                pdfStatus.className = "pdf-status attached";
-              } else {
-                showError(getString("chat-error-no-pdf"));
-              }
-            }
+            // Prepare message content - PDF is already attached in session if available
+            const finalContent = userMessage;
 
             // Add user message to history
             session.messages.push({
@@ -595,14 +688,30 @@ export class UIExampleFactory {
             });
 
             // Build API messages
-            const systemPrompt = 'You are a research assistant.';
+            const systemPrompt = `
+                  You are a helpful assistant. the OUTPUT MUST BE PLAIN TEXT STYLE ,DO NOT USE MARKDOWN.
+            `;
+
+            // Build messages array - include PDF content in first user message if available
             const apiMessages = [
-              { role: 'system', content: systemPrompt },
-              ...session.messages.map(msg => ({
-                role: msg.role,
-                content: msg.content
-              }))
+              { role: 'system', content: systemPrompt }
             ];
+
+            // Add conversation history
+            for (let i = 0; i < session.messages.length; i++) {
+              const msg = session.messages[i];
+              let content = msg.content;
+
+              // Add PDF content to the first user message if PDF is attached
+              if (i === 0 && msg.role === 'user' && session.pdfAttached && session.pdfContent) {
+                content = msg.content + "\n\nPDF Content:\n" + session.pdfContent;
+              }
+
+              apiMessages.push({
+                role: msg.role,
+                content: content
+              });
+            }
 
             // Create AI message element
             const aiMessageObj = createAssistantMessageElement();
@@ -646,8 +755,8 @@ export class UIExampleFactory {
                   const content = data.choices?.[0]?.delta?.content || '';
 
                   if (content) {
-                    assistantContent += content;
-                    updateMessageContent(aiMessageObj, assistantContent);
+                    // assistantContent += content;
+                    assistantContent = updateMessageContent(aiMessageObj, assistantContent, content);
                   }
                 } catch (error) {
                   // Ignore JSON parse errors for incomplete chunks
@@ -715,7 +824,7 @@ export class UIExampleFactory {
               renderUserMessage(displayContent);
             } else if (msg.role === 'assistant') {
               const aiMessageObj = createAssistantMessageElement();
-              updateMessageContent(aiMessageObj, msg.content);
+              updateMessageContent(aiMessageObj, msg.content, "");
               showCopyButton(aiMessageObj.copyBtn);
             }
           }
@@ -735,282 +844,7 @@ export class UIExampleFactory {
 export class HelperExampleFactory {
   @example
   static async dialogExample() {
-    const items = ztoolkit.getGlobal("ZoteroPane").getSelectedItems();
-    var pTitle = '';
-    var pTitleH = '';
-    var Review_text = '';
-    var topic = '';
-
-    for (var i in items) {
-      if (items[i].getField("abstractNote") as string == 'Topic') {
-        topic = items[i].getField("title") as string;
-        continue;
-      }
-
-
-      var title = 'title: ' + items[i].getField("title") as string;
-      var abstract = 'abstract: ' + items[i].getField("abstractNote") as string;
-      var authors = items[i].getCreators();
-      var authorss = [];
-      for (var j in authors) {
-        authorss.push(authors[j].firstName + ' ' + authors[j].lastName);
-      }
-
-
-      pTitleH += items[i].getField("title") as string + '\n';
-      pTitle += 'Paper' + i + ':\n' + title + '\n' + 'authors:' + authorss.join() + '\n' + 'year:' + items[i].getField("date") as string + '\n' + abstract + '\n\n';
-
-      // var url = 'https://dblp.uni-trier.de/search/publ/api?q=' + items[i].getField("title") + '&format=bib'
-      // const response = await fetch(url);
-      // if (!response.ok) {
-      //   throw new Error('Network response was not ok');
-      // } else {
-
-      //   var data = await response.text();
-      //   // pTitle += '' + items[i].getField("title") + '\n\n';
-      //   pTitleH += '' + items[i].getField("title") + '<br>';
-      //   pTitle+='' + data + '\n'+'\n'+abstract+'\n';
-
-      // }
-
-
-
-      // const attachments = await items[i].getAttachments();
-
-      // let pdfAttachment = null;
-      // let pdfPath_content = null;
-
-      // for (const attachmentID of attachments) {
-      //   const attachment = await Zotero.Items.getAsync(attachmentID);
-      //   if (attachment.attachmentContentType === 'application/pdf') {
-      //     pdfAttachment = attachment;
-      //     pdfPath_content = await attachment.attachmentText;
-      //     pTitleH=pdfPath_content.substring(0,100);
-      //     break;
-      //   }
-      // }
-
-    }
-
-    const OPENAI_API_KEY = getPref('input') as string;
-    const apiUrl = getPref('base') as string;
-    const model = getPref('model') as string;
-
-
-
-    if (!OPENAI_API_KEY || !apiUrl || !topic) {
-      Review_text = 'API key or base URL is null,topic is empty, please set them in settings.';
-    }
-
-
-
-    // var user_qtxt = uquery.value;
-
-    // if (ask_pdf.checked == true) {
-    //   const attachments = await item.getAttachments();
-
-    //   let pdfAttachment = null;
-    //   let pdfPath_content = null;
-
-    //   for (const attachmentID of attachments) {
-    //     const attachment = await Zotero.Items.getAsync(attachmentID);
-    //     if (attachment.attachmentContentType === 'application/pdf') {
-    //       pdfAttachment = attachment;
-    //       pdfPath_content = await attachment.attachmentText;
-    //       break;
-    //     }
-    //   }
-
-    //   if (!pdfPath_content) {
-    //     result_p.textContent = 'No PDF attachment found for this item.';
-    //     return;
-    //   }
-    //   user_qtxt += "\n\n paper pdf text:\n\n" + `${pdfPath_content}`;
-    // }
-    var system_prompt = `You are a computer science researcher. Based on the provided literature, write a comprehensive related work section about ${topic}. Instead of simply listing papers, identify and discuss the common ground and key differences between studies.
-
-Writing Requirements:
-
-1.Maintain a balanced style: 60% formal academic tone, 40% conversational clarity.
-2.Use clear subjects in each sentence and prefer short, crisp sentence structures over long, complex ones.
-3.Synthesize the literature into a natural, compact paragraph format.
-4.Include proper LaTeX citations (e.g., \cite{author2023}) at appropriate locations within the text.
-
-Focus on creating a cohesive narrative that demonstrates how the field has evolved and where current gaps or disagreements exist.`;
-
-
-    var requestData = {
-      model: `${model}`,
-      messages: [{ role: 'system', content: `${system_prompt}` }, { role: 'user', content: 'literatures:\n' + `${pTitle}` }],
-      stream: true,
-      // max_tokens: 2000,
-      // temperature: 0.7,
-    };
-
-
-
-    try {
-      var response = await fetch(`${apiUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      } else {
-
-        const reader = response.body?.getReader();
-
-        const decoder = new TextDecoder();
-        let done = false;
-
-        while (!done) {
-          const { done: streamDone, value } = await reader!.read();
-          done = streamDone;
-          if (value) {
-            // 解析数据块
-
-            const chunk = decoder.decode(value, { stream: true });
-            // 处理每个数据块
-
-            const lines = chunk.split('\n').filter(line => line.trim() !== '');
-            for (var line of lines) {
-              try {
-                line = line.replace('data:', '')
-                // result_p.textContent+=line;
-                const data = JSON.parse(line);
-                if (data.choices && data.choices[0]) {
-                  const text = data.choices[0].delta?.content || '';
-                  // process.stdout.write(text); // 直接输出文本到控制台
-                  Review_text += text;
-                }
-              } catch (error) {
-                ztoolkit.log("Could not parse JSON:", line);
-                // result_p.textContent+=error as string;
-              }
-            }
-          }
-        }
-      }
-
-
-    } catch (error) {
-      ztoolkit.log("Error", error);
-      throw error;
-    }
-
-
-
-
-    const dialogData: { [key: string | number]: any } = {
-      inputValue: "test",
-      checkboxValue: true,
-      loadCallback: () => {
-        ztoolkit.log(dialogData, "Dialog Opened!");
-      },
-      unloadCallback: () => {
-        ztoolkit.log(dialogData, "Dialog closed!");
-      },
-    };
-    const dialogHelper = new ztoolkit.Dialog(2, 2)
-      .addCell(0, 0, {
-        tag: "p",
-        properties: {
-          innerHTML:
-            `${pTitleH}`,
-        },
-        styles: {
-          width: "440px",
-          fontSize: "12",
-        },
-      })
-      .addCell(
-        1,
-        0,
-        {
-          tag: "button",
-          namespace: "html",
-          attributes: {
-            type: "button",
-          },
-          listeners: [
-            {
-              type: "click",
-              listener: (e: Event) => {
-                new ztoolkit.Clipboard()
-                  .addText(
-                    `${pTitle}`,
-                    "text/unicode",
-                  )
-                  .copy();
-                ztoolkit.getGlobal("alert")("Copied!");
-              },
-            },
-          ],
-          children: [
-            {
-              tag: "div",
-              styles: {
-                padding: "2.5px 15px",
-              },
-              properties: {
-                innerHTML: "Copy",
-              },
-            },
-          ],
-        },
-        false,
-      )
-      .addCell(
-        1,
-        1,
-        {
-          tag: "button",
-          namespace: "html",
-          attributes: {
-            type: "button",
-          },
-          listeners: [
-            {
-              type: "click",
-              listener: (e: Event) => {
-                new ztoolkit.Clipboard()
-                  .addText(
-                    `${Review_text}`,
-                    "text/unicode",
-                  )
-                  .copy();
-                ztoolkit.getGlobal("alert")("Copied!");
-              },
-            },
-          ],
-          children: [
-            {
-              tag: "div",
-              styles: {
-                padding: "2.5px 15px",
-              },
-              properties: {
-                innerHTML: "Copy Review",
-              },
-            },
-          ],
-        },
-        false,
-      )
-      .addButton("Cancel", "cancel")
-      .setDialogData(dialogData)
-      .open("Papers");
-
-    addon.data.dialog = dialogHelper;
-    await dialogData.unloadLock.promise;
-    addon.data.dialog = undefined;
-
-    ztoolkit.log(dialogData);
+    await showReviewDialog(ztoolkit, addon);
   }
 
   @example

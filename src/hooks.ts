@@ -64,11 +64,11 @@ async function onMainWindowLoad(win: Window): Promise<void> {
   UIExampleFactory.registerReaderItemPaneSection(win);
   UIExampleFactory.registerStyleSheet(win);
 
-  UIExampleFactory.registerRightClickMenuItem();
+  UIExampleFactory.registerRightClickMenuItem(win);
 
   // UIExampleFactory.registerRightClickMenuPopup(win);
 
-  UIExampleFactory.registerWindowMenuWithSeparator();
+  UIExampleFactory.registerWindowMenuWithSeparator(win);
 
   // PromptExampleFactory.registerNormalCommandExample();
 
@@ -88,6 +88,12 @@ async function onMainWindowLoad(win: Window): Promise<void> {
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
+  // Remove DOM-registered menu items
+  [
+    "zotero-itemmenu-addontemplate-test",
+    "zotero-filemenu-addontemplate-sep",
+    "zotero-filemenu-addontemplate-test",
+  ].forEach((id) => win.document.getElementById(id)?.remove());
   ztoolkit.unregisterAll();
   addon.data.dialog?.window?.close();
 }
@@ -97,7 +103,7 @@ function onShutdown(): void {
   addon.data.dialog?.window?.close();
   // Remove addon object
   addon.data.alive = false;
-  delete Zotero[config.addonInstance];
+  delete (Zotero as any)[config.addonInstance];
 }
 
 /**

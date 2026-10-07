@@ -12,6 +12,7 @@ item-section-example2-button-tooltip =
 chat-attach-pdf-label = Attach PDF Content
 chat-attach-pdf-attached = Attached
 chat-attach-pdf-no-pdf = No PDF in current item
+chat-attach-pdf-loading = Loading PDF...
 chat-input-placeholder = ...
 chat-send-button = Send
 chat-send-button-tooltip = Send(Enter)

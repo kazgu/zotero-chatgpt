@@ -12,6 +12,7 @@ item-section-example2-button-tooltip =
 chat-attach-pdf-label = 附加 PDF 内容
 chat-attach-pdf-attached = 已附加
 chat-attach-pdf-no-pdf = 当前项目无 PDF
+chat-attach-pdf-loading = 正在加载 PDF...
 chat-input-placeholder = 输入您的消息...
 chat-send-button = 发送
 chat-send-button-tooltip = 发送消息 (Enter)
